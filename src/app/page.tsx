@@ -9,7 +9,6 @@ import { formatCurrency } from '@/lib/utils';
 import {
   Search,
   ShieldCheck,
-  Sparkles,
   Users,
   Building,
   CheckCircle,
@@ -20,6 +19,9 @@ import {
   Bath,
   Lock,
   HeartHandshake,
+  KeyRound,
+  Calendar,
+  Sparkles,
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -29,79 +31,196 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/70 via-slate-50 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 py-16 sm:py-24 lg:py-32 border-b border-slate-200/60 dark:border-slate-800">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#e2e8f015_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f015_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 text-xs sm:text-sm font-semibold shadow-sm">
-            <Sparkles className="w-4 h-4" /> Next-Gen Housing & Smart Roommate Matching
-          </div>
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-12 sm:py-16 lg:py-20 border-b border-slate-200/70 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left Column: Authentic Copy & Search */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200/80 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Verified City Rentals &amp; Roommate Community</span>
+              </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-slate-900 dark:text-slate-100 tracking-tight max-w-4xl mx-auto leading-[1.1]">
-            Find Your Dream Home &{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Perfect Roommate
-            </span>
-          </h1>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-[1.12]">
+                Find a room you love, with roommates you&apos;ll{' '}
+                <span className="text-blue-600 dark:text-blue-400">actually enjoy</span> living with.
+              </h1>
 
-          <p className="text-base sm:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-normal leading-relaxed">
-            Eliminate the stress of co-living. Explore verified city listings, match by habits & lifestyle compatibility, and reserve rooms with secure Stripe deposits.
-          </p>
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 font-normal leading-relaxed max-w-xl">
+                Skip broker fees, ghost listings, and awkward interviews. Browse verified apartments, connect with background-checked roommates based on daily living habits, and secure your room with safe Stripe escrow deposits.
+              </p>
 
-          {/* Quick Search Bar */}
-          <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800">
-            <form action="/properties" method="GET" className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-              <div className="px-3 py-2 text-left sm:col-span-2">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Location / City
-                </label>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
-                  <input
-                    type="text"
-                    name="city"
-                    placeholder="New York, Austin, SF..."
-                    className="w-full text-sm font-medium bg-transparent focus:outline-none placeholder-slate-400 text-slate-900 dark:text-slate-100"
-                  />
+              {/* Intuitive Search Bar */}
+              <div className="bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 max-w-xl">
+                <form action="/properties" method="GET" className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="px-3 py-1.5 sm:col-span-6 text-left">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      City / Neighborhood
+                    </label>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                      <input
+                        type="text"
+                        name="city"
+                        placeholder="New York, Austin, Chicago..."
+                        className="w-full text-sm font-medium bg-transparent focus:outline-none placeholder-slate-400 text-slate-900 dark:text-slate-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="px-3 py-1.5 sm:col-span-3 text-left border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Space Type
+                    </label>
+                    <select
+                      name="propertyType"
+                      className="w-full text-sm font-medium bg-transparent focus:outline-none text-slate-900 dark:text-slate-100 mt-0.5 cursor-pointer"
+                    >
+                      <option value="">Any</option>
+                      <option value="APARTMENT">Apartment</option>
+                      <option value="CONDO">Condo</option>
+                      <option value="STUDIO">Studio</option>
+                      <option value="HOUSE">House</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-3 flex items-center p-0.5">
+                    <Button type="submit" variant="primary" className="w-full h-full rounded-xl gap-1.5 font-semibold text-sm py-2.5">
+                      <Search className="w-4 h-4" /> Find
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Popular quick links */}
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium text-slate-400">Popular:</span>
+                <Link href="/properties?city=New+York" className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+                  New York
+                </Link>
+                <Link href="/properties?city=Austin" className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+                  Austin
+                </Link>
+                <Link href="/properties?city=San+Francisco" className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
+                  San Francisco
+                </Link>
+                <Link href="/roommates" className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 text-purple-700 dark:text-purple-300 transition font-medium">
+                  Roommates →
+                </Link>
+              </div>
+
+              {/* Social Proof & Trust */}
+              <div className="flex flex-wrap items-center gap-6 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    <div className="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden bg-slate-200">
+                      <Image src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80" alt="User" fill className="object-cover" />
+                    </div>
+                    <div className="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden bg-slate-200">
+                      <Image src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80" alt="User" fill className="object-cover" />
+                    </div>
+                    <div className="relative w-7 h-7 rounded-full border-2 border-white dark:border-slate-900 overflow-hidden bg-slate-200">
+                      <Image src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80" alt="User" fill className="object-cover" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center text-amber-500">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-current" />
+                      ))}
+                    </div>
+                    <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">4.9/5 from 3,200+ renters</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 font-medium">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>100% ID-Verified</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-medium">
+                  <Lock className="w-4 h-4 text-blue-600" />
+                  <span>Stripe Escrow Protected</span>
                 </div>
               </div>
+            </div>
 
-              <div className="px-3 py-2 text-left border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Type
-                </label>
-                <select
-                  name="propertyType"
-                  className="w-full text-sm font-medium bg-transparent focus:outline-none text-slate-900 dark:text-slate-100 mt-0.5 cursor-pointer"
-                >
-                  <option value="">Any Type</option>
-                  <option value="APARTMENT">Apartment</option>
-                  <option value="CONDO">Condo</option>
-                  <option value="STUDIO">Studio</option>
-                  <option value="HOUSE">House</option>
-                </select>
-              </div>
+            {/* Right Column: High Quality Generated Hero Image with Contextual Floating Cards */}
+            <div className="lg:col-span-5 relative">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 group aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/4.5] bg-slate-100 dark:bg-slate-800">
+                <Image
+                  src="/images/hero-apartment.jpg"
+                  alt="Modern Sunlit Shared Apartment Loft"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 45vw"
+                  className="object-cover group-hover:scale-102 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-900/10 pointer-events-none" />
 
-              <div className="flex items-center p-1 sm:p-0">
-                <Button type="submit" variant="primary" className="w-full h-full rounded-xl sm:rounded-2xl gap-2 font-semibold">
-                  <Search className="w-4 h-4" /> Search
-                </Button>
+                {/* Floating Card: Roommate Compatibility */}
+                <div className="absolute top-4 left-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-800 max-w-[220px]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                      <Image
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+                        alt="Roommate"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">Sarah &amp; Maya</p>
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">98% Compatibility</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+                    <span>🌙 11 PM Sleep</span>
+                    <span>✨ Clean: 5/5</span>
+                    <span>🐾 Pet Ok</span>
+                  </div>
+                </div>
+
+                {/* Floating Bottom Left: Listing Info */}
+                <div className="absolute bottom-4 left-4 bg-slate-950/85 backdrop-blur-md text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-lg border border-white/10">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Williamsburg, Brooklyn</p>
+                  <p className="text-sm font-extrabold text-white mt-0.5">$1,250 <span className="text-[11px] font-normal text-slate-300">/mo private room</span></p>
+                </div>
+
+                {/* Floating Bottom Right: Escrow Guarantee */}
+                <div className="absolute bottom-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-xl shadow-xl border border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Deposit Protected</p>
+                    <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">Stripe Escrow</p>
+                  </div>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Trust stats pill */}
-          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs sm:text-sm text-slate-600 dark:text-slate-400 pt-4">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>100% ID Verified Members</span>
+      {/* Platform Real Metrics Bar */}
+      <section className="bg-slate-100/70 dark:bg-slate-900/60 border-b border-slate-200/80 dark:border-slate-800 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">14,200+</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Verified City Rooms</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-blue-600" />
-              <span>Stripe Escrow Deposits</span>
+            <div>
+              <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">96%</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Housemate Match Rate</p>
             </div>
-            <div className="flex items-center gap-2">
-              <HeartHandshake className="w-4 h-4 text-purple-600" />
-              <span>Lifestyle Habit Matching</span>
+            <div>
+              <p className="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">$0</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Zero Broker Fees</p>
+            </div>
+            <div>
+              <p className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">100%</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Stripe Escrow Security</p>
             </div>
           </div>
         </div>
@@ -113,11 +232,14 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div>
               <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                Top Urban Living
+                Handpicked Urban Spaces
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
                 Featured Verified Properties
               </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Each listing is inspected with verified utility costs and transparent house rules.
+              </p>
             </div>
             <Link href="/properties">
               <Button variant="outline" className="gap-2">
@@ -191,15 +313,18 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div>
               <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
-                Compatibility Algorithm
+                Habit &amp; Lifestyle Matching
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-                Meet Compatible Roommates
+                Meet Compatible Housemates
               </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Compare sleep schedules, cleanliness habits, and lifestyle preferences before scheduling a visit.
+              </p>
             </div>
             <Link href="/roommates">
               <Button variant="outline" className="gap-2">
-                <span>Browse All Roommates</span>
+                <span>Browse All Profiles</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -254,7 +379,7 @@ export default function HomePage() {
                 <div className="mt-5">
                   <Link href={`/roommates/${roommate.id}`}>
                     <Button variant="primary" size="sm" className="w-full">
-                      View Compatibility
+                      View Compatibility Profile
                     </Button>
                   </Link>
                 </div>
@@ -268,12 +393,12 @@ export default function HomePage() {
       <section className="py-16 sm:py-24 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-12">
           <div className="max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Simple Process</span>
+            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Simple &amp; Transparent</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              How RoommateHub Works
+              How Shared Living Works Here
             </h2>
             <p className="text-sm text-slate-500">
-              From discovering an apartment to unlocking the front door in 3 seamless steps.
+              From finding an open room to picking up your keys in 3 safe steps.
             </p>
           </div>
 
@@ -282,9 +407,9 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 font-black text-xl flex items-center justify-center mx-auto">
                 1
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Search & Filter</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Explore Verified Rooms</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Filter properties by rent, room type, amenities, and verify roommates by sleep schedule and cleanliness.
+                Filter by verified monthly rent, room size, utilities included, and check real roommate profiles before scheduling a walk-through.
               </p>
             </div>
 
@@ -292,9 +417,9 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-950 text-purple-600 dark:text-purple-400 font-black text-xl flex items-center justify-center mx-auto">
                 2
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Apply & Escrow Deposit</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Connect &amp; Check Compatibility</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Submit your booking application. Once the landlord approves, pay the security deposit safely via Stripe test mode.
+                Compare waking schedules, cleaning standards, guest policies, and work-from-home habits to avoid shared-living friction.
               </p>
             </div>
 
@@ -302,33 +427,77 @@ export default function HomePage() {
               <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-black text-xl flex items-center justify-center mx-auto">
                 3
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Move In & Manage</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Reserve with Escrow Protection</h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Enjoy your new co-living sanctuary. Use the platform dashboard for transparent digital maintenance tickets and payment records.
+                Pay your holding security deposit safely through Stripe test mode. Funds remain protected until lease confirmation and move-in.
               </p>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Real Renter Stories */}
+      <section className="py-16 sm:py-20 bg-slate-50 dark:bg-slate-950 border-t border-slate-200/70 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Real Community</span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
+              Loved by City Renters &amp; Landlords
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative w-11 h-11 rounded-full overflow-hidden bg-slate-200">
+                  <Image src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Emma" fill className="object-cover" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Emma Thornton</h4>
+                  <p className="text-xs text-slate-500">Graphic Designer • Brooklyn, NY</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                &quot;Finding a roommate in New York usually feels like rolling the dice. With RoommateHub, I found someone with the exact same sleep hours and hygiene standards. We&apos;ve lived together for 8 months without a single disagreement!&quot;
+              </p>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative w-11 h-11 rounded-full overflow-hidden bg-slate-200">
+                  <Image src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="Marcus" fill className="object-cover" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Marcus Chen</h4>
+                  <p className="text-xs text-slate-500">Property Owner • Austin, TX</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                &quot;As a landlord, managing roommate turnover was a headache. The Stripe escrow deposit integration and built-in maintenance ticket dashboard made our rental operations 10x smoother.&quot;
+              </p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Banner */}
-      <section className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-16 px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
-            Ready to find your ideal home?
+      <section className="bg-slate-900 text-white py-16 px-4 sm:px-6 lg:px-8 text-center border-t border-slate-800">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
+            Ready to find your ideal home or roommate?
           </h2>
-          <p className="text-base sm:text-lg text-blue-100 max-w-2xl mx-auto">
-            Experience the safest and easiest way to find co-living spaces and roommates in your city today.
+          <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
+            Join thousands of urban renters enjoying transparent pricing, verified housemates, and protected deposits.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <Link href="/register">
-              <Button size="lg" className="bg-white text-blue-700 hover:bg-slate-100 shadow-xl font-bold">
-                Get Started Free
+          <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
+            <Link href="/properties">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg font-bold">
+                Explore Verified Listings
               </Button>
             </Link>
             <Link href="/login">
-              <Button size="lg" variant="outline" className="border-white/50 text-white hover:bg-white/10 font-bold">
-                Try Demo Login
+              <Button size="lg" variant="outline" className="border-slate-700 text-white hover:bg-slate-800 font-bold">
+                One-Click Demo Access
               </Button>
             </Link>
           </div>

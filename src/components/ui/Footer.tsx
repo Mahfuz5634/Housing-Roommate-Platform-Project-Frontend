@@ -16,7 +16,7 @@ export function Footer() {
               <span className="text-xl font-extrabold text-white tracking-tight">RoommateHub</span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed">
-              The premier next-generation platform for verified urban housing, verified co-living, and smart compatibility-matched roommates.
+              The trusted community platform for verified urban rentals, compatible housemates, and protected security deposits.
             </p>
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
               <Shield className="w-4 h-4" /> 100% ID-verified community
@@ -89,8 +89,8 @@ export function Footer() {
             <span className="flex items-center gap-1 text-slate-400">
               Crafted with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> & Next.js App Router
             </span>
-            <span className="flex items-center gap-1 text-blue-400">
-              <Sparkles className="w-3.5 h-3.5" /> Stripe Enabled
+            <span className="flex items-center gap-1 text-emerald-400">
+              <Shield className="w-3.5 h-3.5" /> Stripe Protected
             </span>
           </div>
         </div>
