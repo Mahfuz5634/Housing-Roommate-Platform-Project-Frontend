@@ -10,7 +10,7 @@ import {
   DEMO_USERS,
 } from './mockData';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://housing-roommate-platform-project-b.vercel.app/api/v1';
 
 class ApiClient {
   private getHeaders(): HeadersInit {
