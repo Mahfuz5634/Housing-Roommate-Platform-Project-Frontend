@@ -3,6 +3,8 @@
 import React from 'react';
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminDashboardLayout({
   children,
 }: {
