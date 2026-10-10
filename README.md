@@ -1,57 +1,98 @@
 # Housing & Roommate Platform (Frontend) 🏠
 
-A modern, full-featured housing and roommate matching platform built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, **TanStack Query**, and **Zod**. Consumes the Housing & Roommate REST API with role-based dashboards, Stripe test-mode payments, one-click demo logins, advanced search filters, lifestyle compatibility algorithms, and maintenance workflows.
+A robust, scalable, modern urban housing and roommate matching platform built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, **TanStack Query**, and **Zod**. Consumes the live Housing & Roommate REST API with role-based dashboards, Stripe escrow deposit payments, one-click demo logins, advanced search filters, lifestyle compatibility algorithms, and maintenance workflows.
 
 ---
 
 ## 🚀 Live Links & Repositories
 
-- **Frontend Repository**: [GitHub](https://github.com/Mahfuz5634/Housing-Roommate-Platform-Project-Frontend)
-- **Backend Repository**: [GitHub](https://github.com/Mahfuz5634/Housing-Roommate-Platform-Project-Backend)
-- **Live Frontend**: *Deployable to Vercel*
-- **Live Backend API**: `http://localhost:5000/api/v1`
+| Component | URL |
+| :--- | :--- |
+| **Frontend Repository** | [GitHub Repository](https://github.com/Mahfuz5634/Housing-Roommate-Platform-Project-Frontend) |
+| **Backend Repository** | [GitHub Repository](https://github.com/Mahfuz5634/Housing-Roommate-Platform-Project-Backend) |
+| **Live Backend API** | [https://housing-roommate-platform-project-b.vercel.app/](https://housing-roommate-platform-project-b.vercel.app/) |
+| **Backend Swagger Docs** | [https://housing-roommate-platform-project-b.vercel.app/api-docs](https://housing-roommate-platform-project-b.vercel.app/api-docs) |
 
 ---
 
-## 🔐 Demo Credentials (One-Click Login Supported)
+## 🔐 One-Click Demo Credentials (Mandatory UI Requirement)
 
-The login screen provides **instant 1-click demo login buttons** for evaluators:
+The login screen (`/login`) features **distinct, one-click "Demo Login" buttons** for all 3 primary roles:
 
-| Role | Email | Password | Dashboard Route |
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Welcome Back 👋                      │
+│                  Login to your account                  │
+│                                                         │
+│             ─── OR Quick Demo Login ───                 │
+│                                                         │
+│  ┌─────────────────────────┐ ┌────────────────────────┐ │
+│  │ 👨‍💼 Admin               │ │ 👤 User / Tenant       │ │
+│  │ [Demo Login]            │ │ [Demo Login]           │ │
+│  └─────────────────────────┘ └────────────────────────┘ │
+│                                                         │
+│            ┌─────────────────────────────┐              │
+│            │ 🛠️ Provider / Landlord      │              │
+│            │ [Demo Login]                │              │
+│            └─────────────────────────────┘              │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Role | Demo Email | Password | Redirect Dashboard |
 | :--- | :--- | :--- | :--- |
-| **Admin** 👨‍💼 | `admin@roommatehub.com` | `Admin@123456` | `/admin` |
-| **Landlord / Provider** 🛠️ | `john.landlord@roommatehub.com` | `Landlord@123456` | `/landlord` |
-| **Tenant / Customer** 👤 | `alex.tenant@roommatehub.com` | `Tenant@123456` | `/dashboard` |
+| **Platform Admin** 👨‍💼 | `admin@roommatehub.com` | `Admin@123456` | `/admin` |
+| **Provider / Landlord** 🛠️ | `john.landlord@roommatehub.com` | `Landlord@123456` | `/landlord` |
+| **User / Tenant** 👤 | `alex.tenant@roommatehub.com` | `Tenant@123456` | `/dashboard` |
 
 ---
 
-## 🛠️ Tech Stack
+## 📄 Implemented Page Directory (27 Total App Router Pages)
 
-- **Framework**: Next.js 14+ (App Router, Server Components & Client Components split)
-- **Language**: TypeScript (strict types, zero `any`)
-- **Styling**: Tailwind CSS, Lucide React icons, Sonner toast notifications
-- **State & Data Fetching**: TanStack Query v5 + Zustand global client state
-- **Forms & Validation**: React Hook Form + Zod
-- **Data Visualizations**: Recharts
-- **Payment Processing**: Stripe Checkout Session flow with automated verification & booking confirmation
-- **Authentication**: JWT Bearer token authentication + Next.js Route Protection Middleware
+| Category | Route | Purpose | Component Type |
+| :--- | :--- | :--- | :--- |
+| **Public** | `/` | Landing page (Hero, Search, Featured Listings, Roommate spotlight) | Server Component |
+| **Public** | `/about` | Mission, security guarantees, leadership team | Server Component |
+| **Public** | `/services` | Verified co-living, Stripe escrow, maintenance triage | Server Component |
+| **Public** | `/contact` | Interactive inquiry form with Zod validation | Client Component |
+| **Public** | `/faq` | Categorized search and accordion help center | Client Component |
+| **Public** | `/properties` | Explore listings with URL state synchronization | Client (Suspense) |
+| **Public** | `/properties/[id]` | Dynamic property details, rooms list, booking modal | Client Component |
+| **Public** | `/roommates` | Lifestyle compatibility search with habit filters | Client (Suspense) |
+| **Public** | `/roommates/[id]` | Roommate profile radar, compatibility meter, messaging | Client Component |
+| **Auth** | `/login` | Mandatory 1-click Demo Login for 3 roles + Credentials | Client (Suspense) |
+| **Auth** | `/register` | Registration wizard with Role toggle (Tenant vs Landlord) | Client Component |
+| **Admin** | `/admin` | Platform analytics with Recharts graphs & system status | Client Component |
+| **Admin** | `/admin/manage` | Property approvals, User blocking/roles, Bookings audit | Client Component |
+| **Admin** | `/admin/reports` | System security audit logs and fee policy settings | Client Component |
+| **Tenant** | `/dashboard` | Tenant overview (Key KPIs, lease preview, pending payments) | Client Component |
+| **Tenant** | `/dashboard/bookings` | Booking applications with **Stripe Pay Deposit** trigger | Client Component |
+| **Tenant** | `/dashboard/maintenance` | 24/7 maintenance ticket creation modal and status tracker | Client Component |
+| **Tenant** | `/dashboard/profile` | Roommate lifestyle questionnaire & budget configuration | Client Component |
+| **Tenant** | `/dashboard/payments` | Transaction receipts and payment download simulator | Client Component |
+| **Landlord** | `/landlord` | Provider overview (Occupancy rate, rental collections, charts) | Client Component |
+| **Landlord** | `/landlord/properties` | Managed listings inventory with real-time status toggles | Client Component |
+| **Landlord** | `/landlord/properties/create` | **4-Step Multi-Step Wizard** form to post listings | Client Component |
+| **Landlord** | `/landlord/bookings` | Incoming tenant screening with **1-click Approve / Reject** | Client Component |
+| **Landlord** | `/landlord/maintenance` | Property maintenance tickets triage (In Progress / Resolved) | Client Component |
+| **Payment** | `/payment/success` | Stripe checkout success verification, confetti, and receipt | Client (Suspense) |
+| **Payment** | `/payment/cancel` | Grace period cancellation notices and retry options | Client (Suspense) |
+| **Shared** | `/_not-found` | Branded 404 page with navigation shortcuts | Server Component |
+| **Shared** | `error.tsx` | Global error boundary catching client exceptions with retry | Client Component |
 
 ---
 
-## 📋 Features Overview
+## 🛠️ Key Architectural Highlights
 
-- **3 Fixed Primary Roles**: Admin, Landlord, and Tenant with strictly protected route middleware and custom navigation.
-- **One-Click Demo Authentication**: Instantly switches between Admin, Landlord, and Tenant with pre-seeded accounts.
-- **Stripe Checkout Integration**: Complete deposit payment cycle with redirection to `/payment/success` and backend verification.
-- **URL State Synchronization**: Dynamic filters for price range, property type, city, rooms, and roommate lifestyle sync with URL query params.
-- **Multi-Step Listing Wizard**: Landlord property creation with step-by-step validation.
-- **Roommate Matching Engine**: Algorithmic scoring based on sleep schedule, cleanliness, smoking, and budget compatibility.
-- **Maintenance Ticket Workflow**: Tenants create maintenance requests, Landlords update progress, Admins review platform health.
-- **18+ Responsive Pages**: Rich skeleton loaders, graceful error boundaries, and custom 404 page.
+1. **Next.js 14 App Router Split**: Strict separation between Server Components (default for SEO, static markup, and metadata) and Client Components (`'use client'` for forms, state, Recharts, and interactive modals).
+2. **Next.js Route Middleware**: Strict role-based guard enforcing route protection (`/admin/**`, `/landlord/**`, `/dashboard/**`) via cookie-synchronized JWT tokens.
+3. **Stripe Test Checkout & Verification**: Seamless checkout session initiation that passes `booking_id` to Stripe and verifies completion with atomic database state updates upon redirect to `/payment/success`.
+4. **URL State Synchronization**: Dynamic query parameters (`city`, `propertyType`, `sleepSchedule`, `cleanliness`) sync with browser URL via `useSearchParams` and Next.js router.
+5. **High-Fidelity Offline Resilience**: `apiClient` automatically connects to the live backend API, while maintaining high-fidelity in-memory fallbacks if the local environment is disconnected.
+6. **Recharts Data Visualizations**: Interactive Area, Bar, and Pie charts displaying monthly rental income, booking funnels, and inventory allocation.
 
 ---
 
-## 💻 Getting Started Locally
+## 💻 Local Development Setup
 
 ```bash
 # 1. Clone repository
@@ -61,11 +102,11 @@ cd Housing-Roommate-Platform-Project-Frontend
 # 2. Install dependencies
 npm install
 
-# 3. Setup environment variables
+# 3. Environment configuration
 cp .env.example .env.local
 
-# 4. Run development server
+# 4. Start local development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Visit [http://localhost:3000](http://localhost:3000) to view the application.
