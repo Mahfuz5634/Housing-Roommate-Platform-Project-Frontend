@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -12,7 +12,7 @@ import { DEMO_ROOMMATES } from '@/lib/mockData';
 import { formatCurrency } from '@/lib/utils';
 import { Filter, RotateCcw, Heart, Sparkles, MapPin, CheckCircle, Shield } from 'lucide-react';
 
-export default function RoommatesDirectoryPage() {
+function RoommatesList() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -251,5 +251,21 @@ export default function RoommatesDirectoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RoommatesDirectoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+          <div className="text-center py-20 text-slate-500 font-semibold">
+            Loading Roommate Matches...
+          </div>
+        </div>
+      }
+    >
+      <RoommatesList />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,7 +23,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export default function PropertiesDirectoryPage() {
+function PropertiesList() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -265,5 +265,23 @@ export default function PropertiesDirectoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PropertiesDirectoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        </div>
+      }
+    >
+      <PropertiesList />
+    </Suspense>
   );
 }

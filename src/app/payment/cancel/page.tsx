@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, RotateCcw, Home, HelpCircle } from 'lucide-react';
 
-export default function PaymentCancelPage() {
+function PaymentCancelContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get('booking_id') || 'book-001';
 
@@ -55,5 +55,13 @@ export default function PaymentCancelPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PaymentCancelPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center">Loading checkout status...</div>}>
+      <PaymentCancelContent />
+    </Suspense>
   );
 }

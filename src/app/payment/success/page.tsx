@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
@@ -12,7 +12,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { CheckCircle2, ShieldCheck, ArrowRight, Download, Calendar, Home } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -36,7 +36,7 @@ export default function PaymentSuccessPage() {
 
     const verifyCheckout = async () => {
       try {
-        const res = await apiClient.post('/payments/verify', {
+        const res = await apiClient.post<{ payment?: any }>('/payments/verify', {
           sessionId,
           bookingRequestId: bookingId,
         });
@@ -149,5 +149,13 @@ export default function PaymentSuccessPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[85vh] flex items-center justify-center">Verifying payment with Stripe...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
