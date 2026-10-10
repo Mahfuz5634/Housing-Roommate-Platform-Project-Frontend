@@ -1,20 +1,43 @@
 'use client';
 
-import React, { useState } from 'react';
-import { DEMO_BOOKINGS } from '@/lib/mockData';
+import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { apiClient } from '@/lib/apiClient';
 import { BookingRequest, BookingStatus } from '@/types';
 import { toast } from 'sonner';
 import { FileCheck2, Check, X, Building, Calendar, UserCheck } from 'lucide-react';
 
 export default function LandlordBookingsPage() {
-  const [bookings, setBookings] = useState<BookingRequest[]>(DEMO_BOOKINGS);
+  const [bookings, setBookings] = useState<BookingRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLandlordBookings() {
+      setIsLoading(true);
+      try {
+        const res = await apiClient.get<BookingRequest[]>('/bookings/landlord');
+        if (isMounted && res.success && Array.isArray(res.data)) {
+          setBookings(res.data);
+        }
+      } catch (err: any) {
+        console.error('Could not fetch landlord bookings', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchLandlordBookings();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleUpdateStatus = async (bookingId: string, status: BookingStatus) => {
     setIsUpdating(bookingId);
@@ -23,9 +46,9 @@ export default function LandlordBookingsPage() {
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status } : b))
       );
-      toast.success(`Booking request ${status.toLowerCase()} successfully!`);
-    } catch {
-      toast.error('Failed to update booking status');
+      toast.success(`Booking request marked as ${status}!`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update booking status');
     } finally {
       setIsUpdating(null);
     }
@@ -43,7 +66,11 @@ export default function LandlordBookingsPage() {
         </p>
       </div>
 
-      {bookings.length > 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          <CardSkeleton />
+        </div>
+      ) : bookings.length > 0 ? (
         <div className="space-y-4">
           {bookings.map((booking) => {
             const isPending = booking.status === 'PENDING';
@@ -58,7 +85,7 @@ export default function LandlordBookingsPage() {
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                          {booking.tenant?.profile?.firstName || 'Alex'} {booking.tenant?.profile?.lastName || 'Morgan'}
+                          {booking.tenant?.profile?.firstName || 'Applicant'} {booking.tenant?.profile?.lastName || ''}
                         </h3>
                         <p className="text-xs text-slate-500">
                           Applied for: <span className="font-semibold">{booking.property?.title}</span> • {booking.room?.title || 'Entire Unit'}
@@ -68,58 +95,67 @@ export default function LandlordBookingsPage() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-600 dark:text-slate-400">
                       <div>
-                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Move-in Date</span>
-                        <span>{formatDate(booking.moveInDate)}</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
+                        <div className="mt-0.5">
+                          <Badge status={booking.status}>{booking.status}</Badge>
+                        </div>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Move-out Date</span>
-                        <span>{booking.moveOutDate ? formatDate(booking.moveOutDate) : 'Open-ended'}</span>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Move-in Date</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5 block">
+                          {formatDate(booking.moveInDate)}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 uppercase font-bold block">Monthly Rent</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">{formatCurrency(booking.totalAmount)}</span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5 block">
+                          {formatCurrency(booking.totalAmount)}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 uppercase font-bold block">Security Deposit</span>
-                        <span className="font-bold text-emerald-600">{formatCurrency(booking.depositAmount)}</span>
+                        <span className="font-semibold text-emerald-600 mt-0.5 block">
+                          {formatCurrency(booking.depositAmount)}
+                        </span>
                       </div>
                     </div>
 
                     {booking.notes && (
-                      <p className="text-xs text-slate-500 italic bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl">
+                      <p className="text-xs text-slate-500 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800 italic">
                         &quot;{booking.notes}&quot;
                       </p>
                     )}
                   </div>
 
-                  {/* Right Actions */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-3 border-t lg:border-t-0 pt-4 lg:pt-0">
-                    <Badge status={booking.status}>{booking.status}</Badge>
-
+                  {/* Actions */}
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-100 dark:border-slate-800">
                     {isPending ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => handleUpdateStatus(booking.id, 'APPROVED')}
                           isLoading={isUpdating === booking.id}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shadow-sm font-semibold"
+                          onClick={() => handleUpdateStatus(booking.id, 'APPROVED')}
+                          className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs"
                         >
                           <Check className="w-4 h-4" /> Approve Applicant
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="danger"
                           size="sm"
+                          isLoading={isUpdating === booking.id}
                           onClick={() => handleUpdateStatus(booking.id, 'REJECTED')}
-                          className="text-rose-600 hover:bg-rose-50 gap-1.5"
+                          className="gap-1.5 text-xs font-bold"
                         >
-                          <X className="w-4 h-4" /> Reject
+                          <X className="w-4 h-4" /> Decline
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400 font-medium">
-                        Status updated: {booking.status}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-xs font-semibold text-slate-500">
+                          Decision recorded: <strong className="text-slate-900 dark:text-slate-100">{booking.status}</strong>
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -129,9 +165,8 @@ export default function LandlordBookingsPage() {
         </div>
       ) : (
         <EmptyState
-          icon={FileCheck2}
-          title="No booking applications"
-          description="Tenant applications will appear here when prospective renters apply for your listings."
+          title="No Applications Submitted"
+          description="You don't have any incoming booking applications on your rental properties yet."
         />
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,13 +8,18 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DEMO_ROOMMATES } from '@/lib/mockData';
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
+import { apiClient } from '@/lib/apiClient';
+import { useAuthStore, LIVE_DEMO_CREDENTIALS } from '@/lib/authStore';
 import { formatCurrency } from '@/lib/utils';
-import { Filter, RotateCcw, Heart, Sparkles, MapPin, CheckCircle, Shield } from 'lucide-react';
+import { RoommateProfile } from '@/types';
+import { toast } from 'sonner';
+import { Filter, RotateCcw, Heart, Sparkles, MapPin, CheckCircle, Shield, Lock } from 'lucide-react';
 
 function RoommatesList() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated, login } = useAuthStore();
 
   const initialSleep = searchParams.get('sleepSchedule') || '';
   const initialCleanliness = searchParams.get('cleanliness') || '';
@@ -25,6 +30,10 @@ function RoommatesList() {
   const [cleanliness, setCleanliness] = useState(initialCleanliness);
   const [pets, setPets] = useState(initialPets);
   const [smoking, setSmoking] = useState(initialSmoking);
+
+  const [roommates, setRoommates] = useState<RoommateProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const updateUrlParams = (newParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -56,13 +65,57 @@ function RoommatesList() {
     router.replace('/roommates');
   };
 
-  const filteredRoommates = DEMO_ROOMMATES.filter((r) => {
-    const matchSleep = !initialSleep || r.sleepSchedule === initialSleep;
-    const matchClean = !initialCleanliness || r.cleanlinessScore >= Number(initialCleanliness);
-    const matchPets = initialPets === '' || (initialPets === 'true' ? r.pets : !r.pets);
-    const matchSmoking = initialSmoking === '' || (initialSmoking === 'true' ? r.smoking : !r.smoking);
-    return matchSleep && matchClean && matchPets && matchSmoking;
-  });
+  const handleQuickLogin = async () => {
+    try {
+      const creds = LIVE_DEMO_CREDENTIALS.TENANT;
+      const res = await apiClient.post<{ accessToken: string; user: any }>('/auth/login', {
+        email: creds.email,
+        password: creds.password,
+      });
+      if (res.success && res.data) {
+        login(res.data.user, res.data.accessToken);
+        toast.success('Logged in as Demo Tenant. Loading live roommates...');
+      }
+    } catch (err: any) {
+      toast.error('Could not authenticate demo tenant');
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchRoommates() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const queryParams: Record<string, string> = {};
+        if (initialSleep) queryParams.sleepSchedule = initialSleep;
+        if (initialCleanliness) queryParams.cleanlinessScore = initialCleanliness;
+        if (initialPets) queryParams.pets = initialPets;
+        if (initialSmoking) queryParams.smoking = initialSmoking;
+
+        const res = await apiClient.get<RoommateProfile[]>('/roommates', queryParams);
+        if (isMounted) {
+          if (res.success && Array.isArray(res.data)) {
+            setRoommates(res.data);
+          } else {
+            setRoommates([]);
+          }
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.message || 'Please log in to view roommate candidates.');
+          setRoommates([]);
+        }
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchRoommates();
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, initialSleep, initialCleanliness, initialPets, initialSmoking]);
 
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
@@ -76,10 +129,34 @@ function RoommatesList() {
             Find Your Ideal Roommate
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Browse verified profiles scored by lifestyle compatibility, budget, and daily routines
+            {isLoading
+              ? 'Loading live roommate profiles...'
+              : `Browse ${roommates.length} verified candidate profiles scored by daily habits & routines`}
           </p>
         </div>
       </div>
+
+      {/* Auth Banner if not logged in */}
+      {!isAuthenticated && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Tenant Authentication Required to Browse Roommates
+              </h3>
+              <p className="text-xs text-slate-500">
+                To protect member safety, roommate lifestyle profiles require verified user access.
+              </p>
+            </div>
+          </div>
+          <Button variant="primary" size="sm" onClick={handleQuickLogin} className="shrink-0 bg-purple-600 hover:bg-purple-700">
+            ⚡ 1-Click Tenant Unlock
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Filters */}
@@ -118,17 +195,17 @@ function RoommatesList() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Min Cleanliness Level (1 to 5)
+                  Cleanliness Standard
                 </label>
                 <select
                   value={cleanliness}
                   onChange={(e) => setCleanliness(e.target.value)}
                   className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-purple-500"
                 >
-                  <option value="">Any Level</option>
-                  <option value="3">3+ Stars (Moderate Tidy)</option>
-                  <option value="4">4+ Stars (Very Clean)</option>
-                  <option value="5">5 Stars (Spotless)</option>
+                  <option value="">Any Cleanliness</option>
+                  <option value="5">5/5 - Spotless &amp; Strict</option>
+                  <option value="4">4/5 - Very Tidy</option>
+                  <option value="3">3/5 - Average Clean</option>
                 </select>
               </div>
 
@@ -141,8 +218,8 @@ function RoommatesList() {
                   onChange={(e) => setPets(e.target.value)}
                   className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-purple-500"
                 >
-                  <option value="">Any</option>
-                  <option value="true">Pets Welcome / Has Pet</option>
+                  <option value="">No Preference</option>
+                  <option value="true">Pets Welcome</option>
                   <option value="false">No Pets</option>
                 </select>
               </div>
@@ -156,14 +233,14 @@ function RoommatesList() {
                   onChange={(e) => setSmoking(e.target.value)}
                   className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-purple-500"
                 >
-                  <option value="">Any</option>
-                  <option value="false">Strictly Non-Smoking</option>
-                  <option value="true">Smoking Ok</option>
+                  <option value="">No Preference</option>
+                  <option value="false">Non-Smoker Only</option>
+                  <option value="true">Smoking Allowed</option>
                 </select>
               </div>
 
-              <Button type="submit" variant="primary" className="w-full text-xs font-semibold py-2.5 bg-purple-600 hover:bg-purple-700">
-                Update Roommate Matches
+              <Button type="submit" variant="primary" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold">
+                Apply Filters
               </Button>
             </form>
           </Card>
@@ -171,68 +248,90 @@ function RoommatesList() {
 
         {/* Roommates Grid */}
         <div className="lg:col-span-3">
-          {filteredRoommates.length > 0 ? (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredRoommates.map((r) => (
-                <Card key={r.id} className="p-6 flex flex-col justify-between hover:shadow-lg transition">
+              {[...Array(4)].map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          ) : roommates.length === 0 ? (
+            <EmptyState
+              title="No Roommates Found"
+              description="No candidates matched your search criteria or authentication is required."
+              actionLabel="Reset Search Filters"
+              onAction={handleReset}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {roommates.map((roommate) => (
+                <Card key={roommate.id} className="p-6 hover:shadow-xl transition-all duration-200 flex flex-col justify-between">
                   <div className="space-y-4">
+                    {/* Header */}
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                      <div className="flex items-center gap-3.5">
+                        <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800">
                           <Image
-                            src={r.user?.profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'}
-                            alt="Roommate"
+                            src={
+                              roommate.user?.profile?.avatar ||
+                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'
+                            }
+                            alt="Avatar"
                             fill
                             className="object-cover"
                           />
                         </div>
                         <div>
-                          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                            {r.user?.profile?.firstName} {r.user?.profile?.lastName}
-                          </h4>
-                          <p className="text-xs text-slate-500">{r.occupation || 'Working Professional'}</p>
-                          <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
-                            📍 {r.preferredLocations.join(', ') || 'Metropolitan Area'}
+                          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                            {roommate.user?.profile?.firstName} {roommate.user?.profile?.lastName}
+                          </h3>
+                          <p className="text-xs text-slate-500">
+                            {roommate.occupation || 'Professional'} • {roommate.user?.profile?.city || 'New York'}
                           </p>
                         </div>
                       </div>
 
                       <div className="text-right">
-                        <span className="text-xs font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950 px-2 py-0.5 rounded-full border border-purple-200">
-                          {r.matchScore || 85}% Match
+                        <span className="text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                          {roommate.matchScore || 92}% Match
                         </span>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          {formatCurrency(roommate.budgetMin)} - {formatCurrency(roommate.budgetMax)}
+                        </p>
                       </div>
                     </div>
 
+                    {/* Bio */}
                     <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                      &quot;{r.bio}&quot;
+                      &quot;{roommate.bio}&quot;
                     </p>
 
-                    <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        🕒 {r.sleepSchedule.replace('_', ' ')}
+                    {/* Habit tags */}
+                    <div className="flex flex-wrap gap-1.5 pt-2">
+                      <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                        🕒 {roommate.sleepSchedule.replace('_', ' ')}
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        ✨ Cleanliness {r.cleanlinessScore}/5
+                      <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                        ✨ Cleanliness {roommate.cleanlinessScore}/5
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {r.pets ? '🐾 Pets Welcome' : '🚫 No Pets'}
-                      </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        {r.smoking ? '🚬 Smoking Ok' : '🚭 Non-Smoker'}
+                      <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                        {roommate.pets ? '🐾 Pet Friendly' : '🚫 No Pets'}
                       </span>
                     </div>
+
+                    {roommate.preferredLocations && roommate.preferredLocations.length > 0 && (
+                      <div className="flex items-center gap-1 text-[11px] text-slate-400 pt-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span>Prefers: {roommate.preferredLocations.join(', ')}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Budget Range</span>
-                      <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
-                        {formatCurrency(r.budgetMin)} – {formatCurrency(r.budgetMax)}
-                      </span>
-                    </div>
-                    <Link href={`/roommates/${r.id}`}>
-                      <Button variant="outline" size="sm" className="font-semibold text-purple-600">
+                  <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                      <Shield className="w-3.5 h-3.5" /> ID Verified
+                    </span>
+                    <Link href={`/roommates/${roommate.id}`}>
+                      <Button variant="outline" size="sm" className="rounded-xl text-xs font-semibold">
                         View Profile →
                       </Button>
                     </Link>
@@ -240,13 +339,6 @@ function RoommatesList() {
                 </Card>
               ))}
             </div>
-          ) : (
-            <EmptyState
-              title="No roommates found"
-              description="No roommates match the specified habits criteria. Try expanding your search options."
-              actionLabel="Reset Filters"
-              onAction={handleReset}
-            />
           )}
         </div>
       </div>
@@ -254,17 +346,9 @@ function RoommatesList() {
   );
 }
 
-export default function RoommatesDirectoryPage() {
+export default function RoommatesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
-          <div className="text-center py-20 text-slate-500 font-semibold">
-            Loading Roommate Matches...
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen py-10 px-4 max-w-7xl mx-auto">Loading roommates...</div>}>
       <RoommatesList />
     </Suspense>
   );

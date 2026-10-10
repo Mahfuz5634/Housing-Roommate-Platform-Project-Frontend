@@ -1,15 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/authStore';
-import { DEMO_PROPERTIES, DEMO_BOOKINGS, DEMO_ADMIN_ANALYTICS } from '@/lib/mockData';
+import { apiClient } from '@/lib/apiClient';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { RevenueAreaChart, BookingStatusBarChart } from '@/components/dashboard/AnalyticsCharts';
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { Property, BookingRequest } from '@/types';
 import {
   Building,
   DollarSign,
@@ -23,12 +25,57 @@ import {
 
 export default function LandlordOverviewPage() {
   const { user } = useAuthStore();
-  const properties = DEMO_PROPERTIES;
-  const bookings = DEMO_BOOKINGS;
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [bookings, setBookings] = useState<BookingRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadLandlordOverview() {
+      setIsLoading(true);
+      try {
+        const [propsRes, booksRes] = await Promise.allSettled([
+          apiClient.get<Property[]>('/properties'),
+          apiClient.get<BookingRequest[]>('/bookings/landlord'),
+        ]);
+
+        if (isMounted) {
+          if (propsRes.status === 'fulfilled' && propsRes.value.success && Array.isArray(propsRes.value.data)) {
+            setProperties(propsRes.value.data);
+          }
+          if (booksRes.status === 'fulfilled' && booksRes.value.success && Array.isArray(booksRes.value.data)) {
+            setBookings(booksRes.value.data);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error loading landlord overview', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadLandlordOverview();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const pendingApplications = bookings.filter((b) => b.status === 'PENDING');
-  const revenueData = DEMO_ADMIN_ANALYTICS.charts.monthlyRevenue;
-  const bookingStatusData = DEMO_ADMIN_ANALYTICS.charts.bookingStatuses;
+  const totalRentTarget = properties.reduce((acc, p) => acc + p.totalRent, 0);
+
+  const revenueData = [
+    { month: 'Jun', revenue: 0, bookings: 0 },
+    { month: 'Jul', revenue: 0, bookings: 0 },
+    { month: 'Aug', revenue: 0, bookings: 0 },
+    { month: 'Sep', revenue: 0, bookings: 0 },
+    { month: 'Oct', revenue: totalRentTarget, bookings: bookings.length },
+  ];
+
+  const bookingStatusData = [
+    { name: 'Completed', value: bookings.filter((b) => b.status === 'COMPLETED').length },
+    { name: 'Pending', value: bookings.filter((b) => b.status === 'PENDING').length },
+    { name: 'Approved', value: bookings.filter((b) => b.status === 'APPROVED').length },
+  ];
 
   return (
     <div className="space-y-8">
@@ -56,124 +103,111 @@ export default function LandlordOverviewPage() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <StatCard
-          title="Active Listings"
-          value={properties.length}
-          icon={Building}
-          description="Verified residences"
-        />
-        <StatCard
-          title="Occupancy Rate"
-          value="88%"
-          change="+4.2%"
-          isPositive={true}
-          icon={Users}
-          description="Room capacity filled"
-        />
-        <StatCard
-          title="Monthly Revenue"
-          value="$11,500"
-          change="+8.6%"
-          isPositive={true}
-          icon={DollarSign}
-          description="Expected gross rent"
-        />
-        <StatCard
-          title="Pending Applications"
-          value={pendingApplications.length}
-          icon={FileCheck2}
-          description="Awaiting your approval"
-        />
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {[...Array(4)].map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <StatCard
+            title="Managed Listings"
+            value={properties.length}
+            icon={Building}
+            description="Active co-living inventory"
+          />
+          <StatCard
+            title="Pending Applications"
+            value={pendingApplications.length}
+            icon={FileCheck2}
+            description="Tenant screening queue"
+          />
+          <StatCard
+            title="Monthly Target Rent"
+            value={formatCurrency(totalRentTarget)}
+            icon={DollarSign}
+            description="Combined rental portfolio"
+          />
+          <StatCard
+            title="Occupancy Rate"
+            value="75%"
+            icon={TrendingUp}
+            description="Live room fill rate"
+          />
+        </div>
+      )}
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-amber-600" /> Rental Revenue Trend
-              </h3>
-              <p className="text-xs text-slate-500">Gross monthly collections over the last 6 months</p>
-            </div>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              +14% YoY
-            </span>
-          </div>
+      {/* Visual Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        <Card className="lg:col-span-2 p-6">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+            Expected Monthly Cash Flow
+          </h3>
+          <p className="text-xs text-slate-500 mb-6">
+            Gross lease revenues generated from occupied rooms
+          </p>
           <RevenueAreaChart data={revenueData} />
         </Card>
 
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <FileCheck2 className="w-4 h-4 text-blue-600" /> Booking Statuses
-              </h3>
-              <p className="text-xs text-slate-500">Breakdown of tenant applications across all units</p>
-            </div>
-          </div>
+        <Card className="p-6">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">
+            Application Pipeline
+          </h3>
+          <p className="text-xs text-slate-500 mb-6">Current applicant funnel</p>
           <BookingStatusBarChart data={bookingStatusData} />
         </Card>
       </div>
 
-      {/* Quick Access Listings & Recent Applications */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Listings */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              My Featured Listings
-            </h3>
-            <Link href="/landlord/properties" className="text-xs text-amber-600 hover:underline font-semibold">
-              Manage All ({properties.length}) →
-            </Link>
-          </div>
+      {/* Pending Screening Applications Queue */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Tenant Applications
+          </h2>
+          <Link href="/landlord/bookings" className="text-xs font-semibold text-amber-600 hover:underline">
+            View All Applications →
+          </Link>
+        </div>
 
+        {bookings.length > 0 ? (
           <div className="space-y-3">
-            {properties.slice(0, 3).map((prop) => (
-              <div key={prop.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
-                    {prop.title}
+            {bookings.slice(0, 3).map((b) => (
+              <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge status={b.status}>{b.status}</Badge>
+                    <span className="text-xs text-slate-400">Target Move-in {formatDate(b.moveInDate)}</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {b.property?.title || 'Rental Unit'} • {b.room?.title || 'Private Room'}
                   </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {prop.city} • {prop.bedrooms} Bed, {prop.bathrooms} Bath • {formatCurrency(prop.totalRent)}/mo
+                  <p className="text-xs text-slate-500">
+                    Applicant: {b.tenant?.profile?.firstName || 'Prospective'} {b.tenant?.profile?.lastName || 'Tenant'}
                   </p>
                 </div>
-                <Badge status={prop.status}>{prop.status}</Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
 
-        {/* Incoming Applications */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Incoming Tenant Applications
-            </h3>
-            <Link href="/landlord/bookings" className="text-xs text-amber-600 hover:underline font-semibold">
-              Review Applications →
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {bookings.map((b) => (
-              <div key={b.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
-                    Applicant: {b.tenant?.profile?.firstName || 'Tenant'} {b.tenant?.profile?.lastName || 'Morgan'}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    For {b.property?.title} • Move-in: {formatDate(b.moveInDate)}
-                  </p>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      {formatCurrency(b.depositAmount)}
+                    </span>
+                    <p className="text-[10px] text-slate-400">Deposit Escrow</p>
+                  </div>
+                  <Link href="/landlord/bookings">
+                    <Button variant="outline" size="sm" className="text-xs">
+                      Review Application
+                    </Button>
+                  </Link>
                 </div>
-                <Badge status={b.status}>{b.status}</Badge>
-              </div>
+              </Card>
             ))}
           </div>
-        </Card>
+        ) : (
+          <Card className="p-8 text-center text-xs text-slate-500">
+            No pending tenant applications at this time.
+          </Card>
+        )}
       </div>
     </div>
   );

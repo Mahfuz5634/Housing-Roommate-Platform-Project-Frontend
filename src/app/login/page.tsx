@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/lib/authStore';
+import { useAuthStore, LIVE_DEMO_CREDENTIALS } from '@/lib/authStore';
 import { apiClient } from '@/lib/apiClient';
 import { Button } from '@/components/ui/Button';
 import { UserRole } from '@/types';
@@ -25,7 +25,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
 
-  const { login, setRoleDemo } = useAuthStore();
+  const { login } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -65,17 +65,30 @@ function LoginForm() {
     }
   };
 
-  const handleDemoLogin = (role: UserRole) => {
+  const handleDemoLogin = async (role: UserRole) => {
     setIsLoading(true);
+    const creds = LIVE_DEMO_CREDENTIALS[role];
     try {
-      const demoUser = setRoleDemo(role);
-      toast.success(`Logged in as Demo ${role}: ${demoUser.email}`);
-      const target =
-        callbackUrl ||
-        (role === 'ADMIN' ? '/admin' : role === 'LANDLORD' ? '/landlord' : '/dashboard');
-      router.push(target);
-    } catch {
-      toast.error('Failed to authenticate demo user');
+      setValue('email', creds.email);
+      setValue('password', creds.password);
+
+      const res = await apiClient.post<{ accessToken: string; user: any }>('/auth/login', {
+        email: creds.email,
+        password: creds.password,
+      });
+
+      if (res.success && res.data) {
+        login(res.data.user, res.data.accessToken);
+        toast.success(`Live Login Verified: ${creds.label} (${creds.email})`);
+        const target =
+          callbackUrl ||
+          (role === 'ADMIN' ? '/admin' : role === 'LANDLORD' ? '/landlord' : '/dashboard');
+        router.push(target);
+      } else {
+        toast.error(res.message || 'Live authentication failed');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to authenticate via live API');
     } finally {
       setIsLoading(false);
     }
@@ -131,7 +144,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() =>
-                    toast.info('For demo evaluation, use the one-click demo login buttons below!')
+                    toast.info('For evaluation, click one of the live demo buttons below!')
                   }
                   className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
@@ -172,18 +185,18 @@ function LoginForm() {
           <div className="relative flex items-center justify-center">
             <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
             <span className="bg-white dark:bg-slate-900 px-3 text-xs font-bold text-slate-400 uppercase tracking-wider relative">
-              OR
+              OR LIVE DEMO ACCESS
             </span>
           </div>
 
-          {/* MANDATORY ONE-CLICK ROLE DEMO LOGIN SECTION */}
+          {/* MANDATORY ONE-CLICK ROLE DEMO LOGIN SECTION (CONNECTED TO LIVE BACKEND) */}
           <div className="space-y-3">
             <div className="text-center">
               <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-center gap-1.5">
-                <span>🚀 Quick Demo Login</span>
+                <span>⚡ 1-Click Live Role Login</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                Instant evaluator access with 1 click
+                Authenticates directly against live API database with real JWT
               </p>
             </div>
 
@@ -192,30 +205,32 @@ function LoginForm() {
               {/* Admin Button */}
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleDemoLogin('ADMIN')}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100/70 dark:hover:bg-purple-900/40 text-purple-900 dark:text-purple-200 transition-all group text-left"
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-purple-200 dark:border-purple-900/60 bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-100/70 dark:hover:bg-purple-900/40 text-purple-900 dark:text-purple-200 transition-all group text-left disabled:opacity-60"
               >
                 <div className="flex items-center gap-1.5 mb-1 text-purple-600 dark:text-purple-400">
                   <Shield className="w-4 h-4" />
                   <span className="text-xs font-bold">👨‍💼 Admin</span>
                 </div>
                 <span className="text-[10px] text-purple-600/80 dark:text-purple-400 font-medium">
-                  [Demo Login]
+                  admin@roommatehub.com
                 </span>
               </button>
 
               {/* User / Tenant Button */}
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => handleDemoLogin('TENANT')}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 text-blue-900 dark:text-blue-200 transition-all group text-left"
+                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 text-blue-900 dark:text-blue-200 transition-all group text-left disabled:opacity-60"
               >
                 <div className="flex items-center gap-1.5 mb-1 text-blue-600 dark:text-blue-400">
                   <UserCircle2 className="w-4 h-4" />
-                  <span className="text-xs font-bold">👤 User</span>
+                  <span className="text-xs font-bold">👤 Tenant</span>
                 </div>
                 <span className="text-[10px] text-blue-600/80 dark:text-blue-400 font-medium">
-                  [Demo Login]
+                  alex.tenant@roommatehub.com
                 </span>
               </button>
             </div>
@@ -223,13 +238,14 @@ function LoginForm() {
             {/* Provider / Landlord Button */}
             <button
               type="button"
+              disabled={isLoading}
               onClick={() => handleDemoLogin('LANDLORD')}
-              className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200 transition-all group"
+              className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 text-amber-900 dark:text-amber-200 transition-all group disabled:opacity-60"
             >
               <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span className="text-xs font-bold">🛠️ Provider / Landlord</span>
+              <span className="text-xs font-bold">🏠 Landlord / Host</span>
               <span className="text-[10px] text-amber-600/80 dark:text-amber-400 font-medium ml-1">
-                [Demo Login]
+                (sarah.landlord@roommatehub.com)
               </span>
             </button>
           </div>

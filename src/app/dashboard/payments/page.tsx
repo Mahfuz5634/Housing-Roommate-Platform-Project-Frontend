@@ -1,17 +1,41 @@
 'use client';
 
-import React from 'react';
-import { DEMO_PAYMENTS } from '@/lib/mockData';
+import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { CardSkeleton } from '@/components/ui/LoadingSkeleton';
+import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
 import { CreditCard, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export default function TenantPaymentsPage() {
-  const payments = DEMO_PAYMENTS;
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPayments() {
+      setIsLoading(true);
+      try {
+        const res = await apiClient.get<any[]>('/payments/my-payments');
+        if (isMounted && res.success && Array.isArray(res.data)) {
+          setPayments(res.data);
+        }
+      } catch (err: any) {
+        console.error('Could not fetch payments', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchPayments();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleDownloadReceipt = (txn: string) => {
     toast.success(`Electronic receipt downloaded for transaction ${txn}`);
@@ -22,14 +46,18 @@ export default function TenantPaymentsPage() {
       <div>
         <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Financial Transactions</span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mt-1">
-          Payment History & Receipts
+          Payment History &amp; Receipts
         </h1>
         <p className="text-xs sm:text-sm text-slate-500">
           View all your Stripe security deposits, rent disbursements, and verified transactions
         </p>
       </div>
 
-      {payments.length > 0 ? (
+      {isLoading ? (
+        <div className="space-y-4">
+          <CardSkeleton />
+        </div>
+      ) : payments.length > 0 ? (
         <div className="space-y-4">
           {payments.map((pay) => (
             <Card key={pay.id} className="p-6">
@@ -40,7 +68,7 @@ export default function TenantPaymentsPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                      Security Deposit & Move-in Escrow
+                      Security Deposit &amp; Move-in Escrow
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Transaction ID: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{pay.transactionId}</span>
@@ -76,9 +104,8 @@ export default function TenantPaymentsPage() {
         </div>
       ) : (
         <EmptyState
-          icon={CreditCard}
-          title="No payments made yet"
-          description="When your booking applications are approved, your deposit receipts will appear here."
+          title="No Payment History"
+          description="You haven't made any security deposit payments yet. Deposits appear here once your booking is approved and funded."
         />
       )}
     </div>

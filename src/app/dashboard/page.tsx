@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/authStore';
-import { DEMO_BOOKINGS, DEMO_MAINTENANCE } from '@/lib/mockData';
+import { apiClient } from '@/lib/apiClient';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { BookingRequest } from '@/types';
 import {
   FileCheck2,
   Wrench,
@@ -23,8 +24,40 @@ import {
 
 export default function TenantDashboardOverviewPage() {
   const { user } = useAuthStore();
-  const bookings = DEMO_BOOKINGS;
-  const maintenance = DEMO_MAINTENANCE;
+  const [bookings, setBookings] = useState<BookingRequest[]>([]);
+  const [maintenance, setMaintenance] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchDashboardData() {
+      setIsLoading(true);
+      try {
+        const [bookingsRes, maintRes] = await Promise.allSettled([
+          apiClient.get<BookingRequest[]>('/bookings/my-bookings'),
+          apiClient.get<any[]>('/maintenance/my-requests'),
+        ]);
+
+        if (isMounted) {
+          if (bookingsRes.status === 'fulfilled' && bookingsRes.value.success && Array.isArray(bookingsRes.value.data)) {
+            setBookings(bookingsRes.value.data);
+          }
+          if (maintRes.status === 'fulfilled' && maintRes.value.success && Array.isArray(maintRes.value.data)) {
+            setMaintenance(maintRes.value.data);
+          }
+        }
+      } catch (err: any) {
+        console.error('Error fetching tenant dashboard overview', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const pendingBooking = bookings.find((b) => b.status === 'APPROVED');
 
@@ -98,70 +131,55 @@ export default function TenantDashboardOverviewPage() {
             </div>
           </div>
           <Link href="/dashboard/bookings">
-            <Button variant="primary" size="sm" className="bg-amber-600 hover:bg-amber-700 text-white font-bold shrink-0">
-              Pay Deposit (${pendingBooking.depositAmount})
+            <Button variant="primary" size="sm" className="bg-amber-600 hover:bg-amber-700 shrink-0 font-bold">
+              Pay Deposit Now
             </Button>
           </Link>
         </Card>
       )}
 
-      {/* Active Bookings & Maintenance Two-Column Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Bookings Preview */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Building className="w-4 h-4 text-blue-600" /> Recent Booking Requests
-            </h3>
-            <Link href="/dashboard/bookings" className="text-xs text-blue-600 hover:underline font-semibold">
-              View All →
-            </Link>
-          </div>
+      {/* Recent Applications List */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            Recent Applications
+          </h2>
+          <Link href="/dashboard/bookings" className="text-xs font-semibold text-blue-600 hover:underline">
+            View All →
+          </Link>
+        </div>
 
+        {bookings.length > 0 ? (
           <div className="space-y-3">
-            {bookings.map((b) => (
-              <div key={b.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
-                    {b.property?.title}
+            {bookings.slice(0, 3).map((b) => (
+              <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge status={b.status}>{b.status}</Badge>
+                    <span className="text-xs text-slate-400">Move-in {formatDate(b.moveInDate)}</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {b.property?.title || 'Shared Urban Space'}
                   </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Move-in: {formatDate(b.moveInDate)} • Rent: {formatCurrency(b.totalAmount)}
+                  <p className="text-xs text-slate-500">
+                    Room: {b.room?.title || 'Private Bedroom'}
                   </p>
                 </div>
-                <Badge status={b.status}>{b.status}</Badge>
-              </div>
-            ))}
-          </div>
-        </Card>
 
-        {/* Maintenance Preview */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-blue-600" /> Active Maintenance Tickets
-            </h3>
-            <Link href="/dashboard/maintenance" className="text-xs text-blue-600 hover:underline font-semibold">
-              Submit Ticket →
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {maintenance.map((m) => (
-              <div key={m.id} className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">
-                    {m.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Category: {m.category} • Priority: {m.priority}
-                  </p>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                    {formatCurrency(b.depositAmount)}
+                  </span>
+                  <p className="text-[10px] text-slate-400">Deposit Escrow</p>
                 </div>
-                <Badge status={m.status}>{m.status}</Badge>
-              </div>
+              </Card>
             ))}
           </div>
-        </Card>
+        ) : (
+          <Card className="p-8 text-center text-xs text-slate-500">
+            No applications yet. Explore verified listings to find your next home.
+          </Card>
+        )}
       </div>
     </div>
   );

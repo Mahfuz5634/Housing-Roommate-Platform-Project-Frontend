@@ -4,8 +4,8 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { DEMO_PROPERTIES, DEMO_ROOMMATES } from '@/lib/mockData';
 import { formatCurrency } from '@/lib/utils';
+import { Property } from '@/types';
 import {
   Search,
   ShieldCheck,
@@ -24,9 +24,48 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-export default function HomePage() {
-  const featuredProperties = DEMO_PROPERTIES.slice(0, 3);
-  const featuredRoommates = DEMO_ROOMMATES.slice(0, 3);
+async function getLiveFeaturedProperties(): Promise<Property[]> {
+  try {
+    const res = await fetch('https://housing-roommate-platform-project-b.vercel.app/api/v1/properties', {
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.data) ? data.data : [];
+  } catch (err) {
+    console.error('Error fetching live properties for home page', err);
+    return [];
+  }
+}
+
+async function getLiveFeaturedRoommates(): Promise<any[]> {
+  try {
+    const loginRes = await fetch('https://housing-roommate-platform-project-b.vercel.app/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'alex.tenant@roommatehub.com', password: 'Tenant@123456' }),
+      cache: 'no-store',
+    });
+    const loginData = await loginRes.json();
+    if (!loginData.data?.accessToken) return [];
+
+    const res = await fetch('https://housing-roommate-platform-project-b.vercel.app/api/v1/roommates', {
+      headers: { Authorization: `Bearer ${loginData.data.accessToken}` },
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    return Array.isArray(data.data) ? data.data : [];
+  } catch (err) {
+    console.error('Error fetching live roommates for home page', err);
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const liveProperties = await getLiveFeaturedProperties();
+  const liveRoommates = await getLiveFeaturedRoommates();
+  const featuredProperties = liveProperties.slice(0, 3);
+  const featuredRoommates = liveRoommates.slice(0, 3);
 
   return (
     <div className="flex flex-col min-h-screen">
